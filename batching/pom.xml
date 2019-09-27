@@ -17,19 +17,38 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
-				<extensions>true</extensions>
-				<configuration>
-				<sharedLibraries>
-                        <sharedLibrary>
-                            <groupId>mysql</groupId>
-                            <artifactId>mysql-connector-java</artifactId>
-                        </sharedLibrary>
-                    </sharedLibraries>
-                </configuration>
+		<plugin>
+  				<groupId>org.mule.tools.maven</groupId>
+  				<artifactId>mule-maven-plugin</artifactId>
+  				<version>3.3.2</version>
+  				<extensions>true</extensions>
+  		</plugin>
+		<plugin>
+  				<groupId>org.mule.tools.maven</groupId>
+  				<artifactId>mule-maven-plugin</artifactId>
+  				<version>3.3.2</version>
+  				<extensions>true</extensions>
+  				<configuration>
+    				<cloudHubDeployment>
+      					<muleVersion>4.2.0</muleVersion>
+      					<username>rkvajrala3</username>
+      					<password>Anirudh2008</password>
+      					<environment>Sandbox</environment>
+      					<workerType>Micro</workerType>
+      					<workers>1</workers>
+      					<uri>https://anypoint.mulesoft.com</uri>
+      					<applicationName>app-batching</applicationName>
+					</cloudHubDeployment>
+  				</configuration>
+  				<executions>
+  					<execution>
+    					<id>deploy</id>
+    					<phase>deploy</phase>
+    					<goals>
+      						<goal>deploy</goal>
+    					</goals>
+  					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
