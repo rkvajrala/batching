@@ -1,23 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
-	<db:config name="Database_Config" doc:name="Database Config" doc:id="cadf002f-5f1b-4055-89b4-e0d6192c42e2" >
-		<db:my-sql-connection host="mudb.learn.mulesoft.com" port="3306" user="mule" password="mule" database="training" />
-	</db:config>
-	<file:config name="File_Config" doc:name="File Config" doc:id="c37ac18f-73af-47d7-9633-d458f441856c" >
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+	<file:config name="out_File_Config" doc:name="File Config" doc:id="c37ac18f-73af-47d7-9633-d458f441856c" >
 		<file:connection workingDir="D:\MuleAppData\BatchProcess\out" />
 	</file:config>
-	<flow name="batchingFlow" doc:id="555c7b76-29d9-4e12-a9ed-5e5b1c432abc" initialState="stopped">
-		<db:listener table="accounts" doc:name="On Table Row" doc:id="2d0bc25e-2d64-4e3c-8455-6fec710964b8" config-ref="Database_Config" watermarkColumn="accountID" idColumn="accountID" transactionalAction="ALWAYS_BEGIN">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e87d33b8-0db5-4b83-aa77-cb545c73cf22" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="0783d3ad-85fb-4fb7-a85e-71bae5301b1d" >
+		<db:my-sql-connection host="mudb.learn.mulesoft.com" port="3306" user="mule" password="mule" database="training" />
+	</db:config>
+	<file:config name="In_File_Config" doc:name="File Config" doc:id="422814f4-071b-4415-8c87-07e0a6ec1fc0" >
+		<file:connection workingDir="D:\MuleAppData\BatchProcess\In" />
+	</file:config>
+	<flow name="batchingFlow" doc:id="555c7b76-29d9-4e12-a9ed-5e5b1c432abc" initialState="started">
+		<db:listener table="accounts" doc:name="On Table Row" doc:id="2d0bc25e-2d64-4e3c-8455-6fec710964b8" watermarkColumn="accountID" idColumn="accountID" transactionalAction="ALWAYS_BEGIN" config-ref="Database_Config">
 			<scheduling-strategy >
-				<fixed-frequency />
+				<fixed-frequency frequency="1" timeUnit="MINUTES"/>
 			</scheduling-strategy>
 		</db:listener>
 		<batch:job jobName="batchingBatch_Job" doc:id="69606ff4-b25e-43c0-81d6-b44f838c1c54" >
@@ -32,20 +39,87 @@ payload]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
 				</batch:step>
-				<batch:step name="aggregation" doc:id="2e8ccd5c-3b5e-4744-9f85-41e10fa97c41" >
+				<batch:step name="Batch_Step1" doc:id="9b69991f-ea93-442b-8c8c-f8ef1734b305" >
 					<batch:aggregator doc:name="Batch Aggregator" doc:id="74b2c88a-4087-46ce-af55-129369068720" size="10">
-						<ee:transform doc:name="Transform Message" doc:id="3f28d7ac-b0f2-4913-b77f-bb3684993b2b" >
-							<ee:message >
-								<ee:set-payload ><![CDATA[%dw 2.0
+						<ee:transform doc:name="Transform Message" doc:id="3f28d7ac-b0f2-4913-b77f-bb3684993b2b">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 payload]]></ee:set-payload>
 							</ee:message>
 						</ee:transform>
-						<file:write doc:name="Write" doc:id="7fe5ea1d-dcd1-493e-928f-6964bb099861" config-ref="File_Config" path='#["Account_" ++ uuid() ++ ".txt"]'/>
+						<file:write doc:name="Write" doc:id="7fe5ea1d-dcd1-493e-928f-6964bb099861" config-ref="out_File_Config" path='#["Account_" ++ uuid() ++ ".txt"]' />
 					</batch:aggregator>
 				</batch:step>
 			</batch:process-records>
 		</batch:job>
+	</flow>
+	<flow name="run_batch_to_create_csv_file" doc:id="f6194b2b-c361-4fe0-b218-bcda907d3975" >
+		<http:listener doc:name="Listener" doc:id="b6fd16be-34c1-4c52-9310-454b0a0d3762" config-ref="HTTP_Listener_config" path="InitiateBatchProcess/{CountryName}">
+			<http:response>
+				<http:body ><![CDATA[#["Batch request submitted"]]]></http:body>
+			</http:response>
+		</http:listener>
+		<set-variable value="#[attributes.uriParams['CountryName']]" doc:name="Set Variable" doc:id="d0dc2b22-40e1-44fc-9a31-92202cb612b9" variableName="country_name"/>
+		<choice doc:name="Choice" doc:id="edd98fd6-7354-4b16-8a61-b6cbac464aa3" >
+			<when expression='#[vars.country_name != "ALL"]'>
+				<db:select doc:name="Select" doc:id="86e3abaf-4e39-41d8-a2d6-79244bff5ea5" config-ref="Database_Config">
+			<db:sql>SELECT * FROM accounts where country = :countryname </db:sql>
+			<db:input-parameters><![CDATA[#['countryname': vars.country_name]]]></db:input-parameters>
+		</db:select>
+			</when>
+			<otherwise >
+				<db:select doc:name="Select" doc:id="566e8502-fe92-4b62-af8a-de26a087d3f8" config-ref="Database_Config">
+					<db:sql >SELECT * FROM accounts </db:sql>
+				</db:select>
+			</otherwise>
+		</choice>
+		<batch:job jobName="batchingBatch_Job1" doc:id="185644b4-a271-4795-bc59-b0de71b43fc0" >
+			<batch:process-records >
+				<batch:step name="Batch_Step2" doc:id="dcd7e9de-48c2-45dc-bb83-ec038d4cfaed" acceptExpression='#[payload.country == "USA"]'>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="6283ab18-18d6-4a27-9f10-fc02867e7a9e" size="5">
+						<ee:transform doc:name="Transform Message" doc:id="3912eb03-6a89-4831-acce-f4276d809e8a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+						<file:write doc:name="Write" doc:id="b50c2cd7-8a52-41ba-840a-6000b861603b" config-ref="out_File_Config" path="#[uuid()]" />
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+		</batch:job>
+	</flow>
+	<flow name="batching_foreach" doc:id="741c74ba-baff-4dfb-a162-26bc5ddd94a2" >
+		<file:listener doc:name="On New or Updated File" doc:id="963c8fb7-5cb0-45c2-8d96-def5143715b4" config-ref="In_File_Config" autoDelete="true">
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</file:listener>
+		<ee:transform doc:name="Transform Message" doc:id="f0f70e9c-dbca-4c42-bd56-5079bf029771" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="c449f6d9-f6cc-4d50-8d2f-fc12d30e7609">
+			<ee:transform doc:name="Transform Message" doc:id="50af4766-fbf7-40b6-bf3f-87afd655de37">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<file:write doc:name="Write" doc:id="6c1b8f7a-9f9c-4130-be00-d5f00f962133" config-ref="out_File_Config" path='#["account_" ++ uuid() ++ ".json"]' />
+			<set-payload value="File sent to drop folder." doc:name="Set Payload" doc:id="50443536-c26c-4c86-8764-affe97c1a2c9" />
+			<logger level="DEBUG" doc:name="Logger" doc:id="389e80eb-9fe4-4912-b9f2-81b2c52e5d00" message="#[payload]" />
+		</foreach>
+		<logger level="INFO" doc:name="Logger" doc:id="7fb4de14-ebfa-4505-a2ca-a0870c146193" message="#[payload]" />
 	</flow>
 </mule>
