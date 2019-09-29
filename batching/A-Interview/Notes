@@ -1,0 +1,27 @@
+Foreach - working on single thread
+
+BatchJob - Multi - Threading
+	BatchStep - 1
+			- Accept Expression 
+				Ex : #[payload.country == "India" ] or #[paload.zip == "30022"]
+			- Accept Policy
+				- NO FAILURE - Default
+				- ALL
+				- ONLY FAILURE
+		Process
+		Aggregate
+
+	BatchStep - 2 
+		Process
+		Aggregate
+		
+OnComplete		
+		Total records process
+		Total successed 
+		Total failed
+
+Object-Store
+	store 
+	retreive
+
+Watermark
